@@ -1,0 +1,259 @@
+﻿<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مكتبة دار الحكمة</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,700;1,700&family=Tajawal:wght@400;700;900&display=swap');
+        
+        :root {
+            --bg-overlay: rgba(255, 255, 255, 0.1);
+            --text-primary: #1a1a1a;
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --accent: #C5A059;
+        }
+
+        .dark-mode {
+            --bg-overlay: rgba(0, 0, 0, 0.7);
+            --text-primary: #f3f4f6;
+            --glass-border: rgba(255, 255, 255, 0.05);
+        }
+
+        body { 
+            font-family: 'Tajawal', sans-serif; margin: 0; overflow: hidden;
+            background-size: cover; background-position: center; transition: background-image 0.8s ease-in-out;
+            background-attachment: fixed; color: var(--text-primary);
+            height: 100vh;
+        }
+
+        .fade-up { animation: fadeInUp 0.8s ease-out forwards; }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .font-wisdom { font-family: 'Amiri', serif; }
+        .glass { background: var(--bg-overlay); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); box-shadow: 0 8px 32px rgba(0,0,0,0.1); }
+        
+        #loader { background: #fff; z-index: 100000; transition: 1s; }
+        .dot { width: 12px; height: 12px; background: var(--accent); border-radius: 50%; animation: bounce 0.5s infinite alternate; }
+        @keyframes bounce { to { transform: translateY(-15px); opacity: 0.3; } }
+
+        .sidebar-item { 
+            cursor: pointer; padding: 14px 20px; border-radius: 18px; transition: 0.4s;
+            margin-bottom: 10px; font-weight: 700; display: flex; align-items: center; gap: 12px;
+            color: var(--text-primary);
+        }
+        .sidebar-item:hover, .sidebar-item.active { background: rgba(197, 160, 89, 0.2); transform: scale(1.02); color: var(--accent); }
+
+        .book-card { 
+            position: relative; border-radius: 20px; overflow: hidden; height: 280px; transition: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+        }
+        .book-card:hover { transform: translateY(-10px) rotate(2deg); }
+        .book-card img { width: 100%; height: 100%; object-fit: cover; }
+        .book-actions { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; opacity: 0; transition: 0.3s; }
+        .book-card:hover .book-actions { opacity: 1; }
+
+        #main-app { visibility: hidden; opacity: 0; transition: 1s; }
+        .visible-app { visibility: visible !important; opacity: 1 !important; }
+        .hidden-content { display: none !important; }
+
+        .insta-btn { background: linear-gradient(45deg, #f09433, #bc1888); color: white; border: none !important; }
+        
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 10px; }
+
+        .bg-choice { height: 80px; border-radius: 15px; cursor: pointer; border: 3px solid transparent; transition: 0.3s; background-size: cover; background-position: center; }
+        .bg-choice:hover { border-color: var(--accent); transform: scale(1.05); }
+    </style>
+</head>
+<body id="main-body" style="background-image: url('https://images.unsplash.com/photo-1507842217343-583bb7270b66?q=80&w=2000');">
+
+<div id="loader" class="fixed inset-0 flex flex-col items-center justify-center">
+    <h1 class="font-wisdom text-7xl md:text-9xl mb-12 text-black tracking-tighter">دار الحكمة</h1>
+    <div class="flex gap-3">
+        <div class="dot"></div><div class="dot" style="animation-delay: 0.2s"></div><div class="dot" style="animation-delay: 0.4s"></div>
+    </div>
+</div>
+
+<div id="sidebar-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/60 z-[90] hidden backdrop-blur-sm"></div>
+
+<div id="main-app" class="h-screen w-screen flex flex-col overflow-hidden">
+    <header class="glass m-4 md:m-6 rounded-3xl p-4 md:p-5 px-6 md:px-12 flex justify-between items-center relative z-10">
+        <div class="flex items-center gap-4 cursor-pointer group" onclick="showIntro()">
+            <div class="bg-white/20 p-2 rounded-2xl group-hover:bg-gold/30 transition-all">
+                <span class="text-3xl md:text-4xl">🏛️</span>
+            </div>
+            <h1 class="font-wisdom text-2xl md:text-4xl font-bold tracking-tight hidden sm:block">دار الحكمة</h1>
+        </div>
+        
+        <div class="flex-1 mx-4 md:mx-20 max-w-2xl">
+            <input type="text" id="search-input" onkeypress="if(event.key==='Enter')fetchData(this.value)" placeholder="ماذا تريد أن تقرأ اليوم؟" class="w-full bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl py-3 md:py-4 px-6 md:px-10 outline-none text-right font-bold focus:ring-2 focus:ring-[#C5A059] transition-all text-white placeholder:text-white/50 shadow-inner">
+        </div>
+
+        <div class="flex gap-3 items-center">
+            <button onclick="toggleSidebar()" class="md:hidden p-3 bg-white/20 rounded-2xl">☰</button>
+            <button onclick="setTheme('toggle')" class="p-3 bg-white/20 rounded-2xl hover:bg-white/40 transition-all">🌓</button>
+            <button onclick="toggleBox('settings-box')" class="p-3 bg-white/20 rounded-2xl hover:bg-white/40 transition-all">⚙️</button>
+        </div>
+    </header>
+
+    <div class="flex flex-1 overflow-hidden px-4 md:px-6 pb-4 md:pb-6 gap-6">
+        <aside id="sidebar" class="glass rounded-[2.5rem] p-8 overflow-y-auto w-72 hidden md:block transition-all">
+            <p class="text-[11px] font-black opacity-50 mb-8 text-center tracking-[0.3em] uppercase">اكتشف المزيد</p>
+            <div onclick="showComingSoon('الكتب الصوتية')" class="sidebar-item bg-orange-500/5 text-orange-400"><span>🎧</span> كتب صوتية</div>
+            <div onclick="showComingSoon('البودكاست')" class="sidebar-item bg-purple-500/5 text-purple-400"><span>🎙️</span> البودكاست</div>
+            
+            <p class="text-[11px] font-black opacity-50 my-8 text-center tracking-[0.3em] uppercase border-t border-white/10 pt-6">التصنيفات</p>
+            <div onclick="fetchData('islamic OR quran OR tafsir OR حديث نبوي', this)" class="sidebar-item"><span>🕌</span> العلوم الدينية</div>
+            <div onclick="fetchData('أدب عربي', this)" class="sidebar-item"><span>🖋️</span> الأدب العربي</div>
+            <div onclick="fetchData('روايات عالمية', this)" class="sidebar-item"><span>📖</span> الروايات</div>
+            <div onclick="fetchData('تنمية بشرية', this)" class="sidebar-item"><span>✨</span> تطوير الذات</div>
+            <div onclick="fetchData('تاريخ', this)" class="sidebar-item"><span>📜</span> تاريخ وأرشيف</div>
+            
+            <div class="mt-12">
+                <a href="https://www.instagram.com/mishkat4676" target="_blank" class="sidebar-item insta-btn shadow-lg justify-center">مشكاة على إنستغرام</a>
+            </div>
+        </aside>
+
+        <main class="flex-1 glass rounded-[3rem] p-6 md:p-12 overflow-y-auto relative shadow-inner">
+            <div id="intro-page" class="flex flex-col items-center justify-center text-center h-full space-y-8 fade-up">
+                <div class="bg-[#C5A059]/10 p-10 rounded-full mb-4">
+                    <h2 class="font-wisdom text-6xl md:text-8xl text-[#C5A059]">دار الحكمة</h2>
+                </div>
+                <p class="max-w-lg text-lg md:text-2xl font-medium opacity-90 leading-relaxed">بوابتك الرقمية نحو كنوز المعرفة.. آلاف الكتب بانتظارك.</p>
+                <button onclick="fetchData('كتب')" class="px-12 md:px-20 py-5 bg-[#C5A059] text-darkBlue rounded-2xl font-black text-xl hover:bg-white transition-all shadow-2xl hover:scale-105 active:scale-95">ابدأ القراءة</button>
+            </div>
+            <div id="book-grid" class="hidden-content grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 md:gap-10 fade-up"></div>
+        </main>
+    </div>
+</div>
+
+<div id="settings-box" class="fixed inset-0 z-[1000] hidden items-center justify-center bg-black/80 backdrop-blur-2xl p-6">
+    <div class="bg-white/90 p-8 md:p-12 rounded-[3rem] w-full max-w-xl shadow-2xl text-center">
+        <h3 class="font-wisdom text-4xl mb-8 text-black border-b border-black/10 pb-6">اختر الجو المناسب</h3>
+        <div class="grid grid-cols-3 gap-4 mb-10">
+            <div onclick="setBg('https://images.unsplash.com/photo-1507842217343-583bb7270b66?q=80&w=2000')" class="bg-choice shadow-lg" style="background-image: url('https://images.unsplash.com/photo-1507842217343-583bb7270b66?w=200')"></div>
+            <div onclick="setBg('https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?q=80&w=2000')" class="bg-choice shadow-lg" style="background-image: url('https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=200')"></div>
+            <div onclick="setBg('https://images.unsplash.com/photo-1481627834876-b7833e8f5570?q=80&w=2000')" class="bg-choice shadow-lg" style="background-image: url('https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=200')"></div>
+            <div onclick="setBg('https://images.unsplash.com/photo-1512820790803-83ca734da794?q=80&w=2000')" class="bg-choice shadow-lg" style="background-image: url('https://images.unsplash.com/photo-1512820790803-83ca734da794?w=200')"></div>
+            <div onclick="setBg('https://images.unsplash.com/photo-1457369332241-0988a8927946?q=80&w=2000')" class="bg-choice shadow-lg" style="background-image: url('https://images.unsplash.com/photo-1457369332241-0988a8927946?w=200')"></div>
+            <div onclick="setBg('https://images.unsplash.com/photo-1521587760476-6c12a4b040da?q=80&w=2000')" class="bg-choice shadow-lg" style="background-image: url('https://images.unsplash.com/photo-1521587760476-6c12a4b040da?w=200')"></div>
+        </div>
+        <button onclick="toggleBox('settings-box')" class="w-full py-5 bg-black text-white rounded-2xl font-black text-xl hover:bg-[#C5A059] transition-all">تطبيق</button>
+    </div>
+</div>
+
+<div id="reader-overlay" class="fixed inset-0 z-[3000] hidden bg-black/95 backdrop-blur-3xl flex-col p-2 md:p-6">
+    <div class="glass mb-4 p-4 rounded-2xl flex justify-between items-center px-8 border-none">
+        <button onclick="closeReader()" class="bg-red-500/20 text-red-500 hover:bg-red-500 hover:text-white px-8 py-2 rounded-xl text-sm font-black transition-all">إغلاق ×</button>
+        <span id="book-title-display" class="font-wisdom text-lg md:text-2xl text-white truncate max-w-xl"></span>
+    </div>
+    <div class="flex-1 rounded-[2rem] overflow-hidden shadow-2xl border-4 border-white/10">
+        <iframe id="reader-frame" class="w-full h-full border-none bg-white" allowfullscreen></iframe>
+    </div>
+</div>
+
+<script>
+    function showComingSoon(type) {
+        if(window.innerWidth < 768) toggleSidebar();
+        const grid = document.getElementById('book-grid');
+        const intro = document.getElementById('intro-page');
+        intro.classList.add('hidden-content');
+        grid.classList.remove('hidden-content');
+        grid.innerHTML = `<div class="col-span-full flex flex-col items-center justify-center py-20 text-center fade-up"><div class="text-8xl mb-8">⏳</div><h3 class="font-wisdom text-5xl mb-4 text-[#C5A059]">قسم ${type}</h3><p class="text-2xl font-bold opacity-60">قريباً جداً في التحديث القادم..</p></div>`;
+    }
+
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+        sidebar.classList.toggle('hidden');
+        sidebar.classList.toggle('fixed');
+        sidebar.classList.toggle('right-0');
+        sidebar.classList.toggle('z-[100]');
+        sidebar.classList.toggle('h-full');
+        overlay.classList.toggle('hidden');
+    }
+
+    async function fetchData(q, el) {
+        if(window.innerWidth < 768) {
+            const sidebar = document.getElementById('sidebar');
+            if(!sidebar.classList.contains('hidden')) toggleSidebar();
+        }
+        const intro = document.getElementById('intro-page');
+        const grid = document.getElementById('book-grid');
+        intro.classList.add('hidden-content');
+        grid.classList.remove('hidden-content');
+        if(el) {
+            document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+            el.classList.add('active');
+        }
+        grid.innerHTML = '<div class="col-span-full text-center py-40 font-wisdom text-4xl text-white animate-pulse">جاري فتح الأرشيف...</div>';
+        try { 
+            const searchQuery = `(${q}) AND (collection:(hindawifoundation) OR collection:(shamela) OR collection:(islamic) OR language:ara) AND mediatype:texts`;
+            const url = `https://archive.org/advancedsearch.php?q=${encodeURIComponent(searchQuery)}&output=json&rows=25&sort[]=downloads+desc`;
+            const response = await fetch(url);
+            const data = await response.json();
+            grid.innerHTML = '';
+            
+            if(data.response.docs.length === 0) {
+                grid.innerHTML = '<p class="text-white text-center col-span-full font-bold py-20">لم يتم العثور على نتائج، جرب كلمات بحث أخرى.</p>';
+                return;
+            }
+
+            data.response.docs.forEach(b => {
+                const id = b.identifier;
+                const title = b.title || 'عنوان غير معروف';
+                grid.innerHTML += `
+                    <div class="book-card fade-up">
+                        <img src="https://archive.org/services/img/${id}" onerror="this.src='https://via.placeholder.com/300x450?text=Cover'">
+                        <div class="book-actions">
+                            <button onclick="openBook('${id}', '${title.replace(/'/g, "")}')" class="bg-[#C5A059] text-darkBlue px-8 py-3 rounded-2xl font-black text-lg shadow-xl hover:bg-white transition-all">قراءة</button>
+                            <a href="https://archive.org/download/${id}/${id}.pdf" target="_blank" class="text-white text-xs underline mt-2 opacity-70">تحميل PDF</a>
+                        </div>
+                        <div class="absolute bottom-0 w-full p-3 bg-black/90 text-white text-[10px] text-center truncate font-bold border-t border-white/10">${title}</div>
+                    </div>`;
+            });
+        } catch (e) { grid.innerHTML = '<p class="text-white text-center col-span-full font-bold">خطأ في الاتصال بالأرشيف.</p>'; }
+    }
+
+    function setTheme(mode) { document.body.classList.toggle('dark-mode'); }
+    
+    function showIntro() {
+        document.getElementById('intro-page').classList.remove('hidden-content');
+        document.getElementById('book-grid').classList.add('hidden-content');
+    }
+
+    window.addEventListener('load', () => {
+        setTimeout(() => {
+            document.getElementById('loader').style.opacity = '0';
+            setTimeout(() => document.getElementById('loader').style.display = 'none', 1000);
+            document.getElementById('main-app').classList.add('visible-app');
+        }, 2000);
+    });
+
+    function toggleBox(id) {
+        const box = document.getElementById(id);
+        box.style.display = (box.style.display === 'flex') ? 'none' : 'flex';
+    }
+
+    function setBg(url) { document.getElementById('main-body').style.backgroundImage = `url('${url}')`; }
+
+    function openBook(id, title) {
+        document.getElementById('book-title-display').innerText = title;
+        const embedUrl = `https://archive.org/embed/${id}?ui=full&autoplay=0`;
+        const frame = document.getElementById('reader-frame');
+        frame.src = embedUrl;
+        document.getElementById('reader-overlay').style.display = 'flex';
+    }
+
+    function closeReader() {
+        document.getElementById('reader-overlay').style.display = 'none';
+        document.getElementById('reader-frame').src = '';
+    }
+</script>
+</body>
+</html>
